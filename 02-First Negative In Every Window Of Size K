@@ -166,7 +166,7 @@ class Solution {
 
 class Solution {
     static List<Integer> firstNegInt(int[] arr, int k) {
-        ArrayDeque<Integer> negativeElementIndices = new ArrayDeque<>();
+        Deque<Integer> negativeElementIndices = new ArrayDeque<>();
 
         int windowStart = 0;
         int windowEnd = 0;
