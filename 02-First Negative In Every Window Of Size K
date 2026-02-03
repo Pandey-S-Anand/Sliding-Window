@@ -1,0 +1,211 @@
+//Bruteforce Approach
+
+class Solution {
+    /*
+     * Generate every subarray of size k and
+     * scan each window to find the first negative number.
+     */
+    static List<Integer> firstNegInt(int arr[], int k) {
+        // Stores the first negative number for each window
+        List<Integer> negativeElementIndices = new ArrayList<>();
+
+        // Generate all subarrays using two loops
+        for (int start = 0; start < arr.length; start++) {
+            for (int end = start; end < arr.length; end++) {
+                // Check if current subarray size is k
+                int subarraySize = end - start + 1;
+                if (subarraySize == k) {
+                    // Find first negative number in the current window
+                    negativeElementIndices.add(findFirstNegativeInWindow(arr, start, end));
+                    break; // Move to next window
+                }
+            }
+        }
+
+        return negativeElementIndices;
+    }
+
+    /*
+     * Scans the current window linearly to find
+     * the first negative element.
+     * Returns 0 if no negative element exists.
+     */
+    private static int findFirstNegativeInWindow(int[] arr, int start, int end) {
+        int firstNegative = 0;
+
+        for (int i = start; i <= end; i++) {
+            if (arr[i] < 0) {
+                firstNegative = arr[i];
+                break;
+            }
+        }
+        return firstNegative;
+    }
+}
+
+
+//Better Approach
+
+class Solution {
+    static List<Integer> firstNegInt(int[] arr, int k) {
+        /*
+         * Stores indices of all negative elements encountered so far.
+         * Indices are stored in increasing order because we traverse
+         * the array from left to right.
+         */
+        List<Integer> negativeElementIndices = new ArrayList<>();
+
+        int windowStart = 0;
+        int windowEnd = 0;
+
+        /*
+         * Build the first window of size k.
+         * While building it, collect indices of negative elements.
+         */
+        while (windowEnd < k) {
+            if (arr[windowEnd] < 0) {
+                negativeElementIndices.add(windowEnd);
+            }
+            windowEnd++;
+        }
+
+        // Stores the first negative number for each window
+        List<Integer> firstNegativePerWindow = new ArrayList<>();
+
+        // Process the first window
+        firstNegativePerWindow.add(findFirstNegativeInWindow(negativeElementIndices, arr, windowStart, windowEnd - 1));
+
+        /*
+         * Slide the window one step at a time:
+         * - Increment windowStart and windowEnd to move the window forward
+         */
+        while (windowEnd < arr.length) {
+            windowStart++;
+
+            // Add index of of the new element at windowEnd if it is negative
+            if (arr[windowEnd] < 0) {
+                negativeElementIndices.add(windowEnd);
+            }
+
+            firstNegativePerWindow.add(findFirstNegativeInWindow(negativeElementIndices, arr, windowStart, windowEnd));
+
+            windowEnd++;
+        }
+
+        return firstNegativePerWindow;
+    }
+
+    private static int findFirstNegativeInWindow(List<Integer> negativeElementIndices, int[] arr, int windowStart, int windowEnd) {
+        int i = 0;
+
+        /*
+         * Skip all negative indices that are before the current window.
+         *
+         * Condition explanation:
+         * negativeElementIndices.get(i) < windowStart
+         * → This negative element belongs to a previous window
+         * → It cannot be the first negative for the current window
+         * → Since windowStart only moves forward, these indices will also never be relevant for any future window, so we can ignore it
+         *
+         ** Note:
+         * - We do not physically remove elements from the list.
+         * - Instead, we move a pointer forward to skip all outdated indices.
+         * - This avoids costly remove operations on ArrayList.
+         */
+        while (i < negativeElementIndices.size() && negativeElementIndices.get(i) < windowStart) {
+            i++;
+        }
+
+        /*
+         * After skipping outdated indices:
+         * - If a valid index exists within [windowStart, windowEnd],
+         *   it represents the first negative element of the window.
+         */
+        if (i < negativeElementIndices.size() && negativeElementIndices.get(i) >= windowStart && negativeElementIndices.get(i) <= windowEnd) {
+            return arr[negativeElementIndices.get(i)];
+        }
+
+        // If no negative number exists in the current window
+        return 0;
+    }
+}
+
+
+//Optimal Approach
+
+/*
+ *  Explanation:
+ *
+ * This approach follows the exact same core logic as the "Better Approach".
+ * The only difference lies in how we handle negative elements that belong
+ * to previous windows.
+ *
+ * In the Better Approach (using ArrayList):
+ * - We stored indices of negative elements in an ArrayList.
+ * - When the window moved forward, some negative indices became irrelevant
+ *   because they were before the current windowStart.
+ * - Instead of removing those indices from the front of the ArrayList,
+ *   we skipped them using a pointer.
+ *
+ * Reason:
+ * - Removing an element from the front of an ArrayList is an O(n) operation
+ *   because all remaining elements must be shifted left.
+ * - To avoid this extra cost, we only skipped outdated indices instead of
+ *   physically removing them.
+ *
+ * In the Optimal Approach (using ArrayDeque):
+ * - We use a Deque to store indices of negative elements.
+ * - When a negative index falls out of the current window
+ *   (index < windowStart), we remove it from the front of the deque.
+ *
+ * Why Deque is better:
+ * - Removing elements from the front of a deque is an O(1) operation.
+ * - This allows us to directly discard irrelevant negative indices
+ *   instead of repeatedly skipping them.
+ */
+
+class Solution {
+    static List<Integer> firstNegInt(int[] arr, int k) {
+        ArrayDeque<Integer> negativeElementIndices = new ArrayDeque<>();
+
+        int windowStart = 0;
+        int windowEnd = 0;
+
+        while (windowEnd < k) {
+            if (arr[windowEnd] < 0) {
+                negativeElementIndices.offerLast(windowEnd);
+            }
+            windowEnd++;
+        }
+
+        List<Integer> firstNegativePerWindow = new ArrayList<>();
+
+        firstNegativePerWindow.add(findFirstNegativeInWindow(negativeElementIndices, arr, windowStart, windowEnd - 1));
+
+        while (windowEnd < arr.length) {
+            windowStart++;
+
+            if (arr[windowEnd] < 0) {
+                negativeElementIndices.offerLast(windowEnd);
+            }
+
+            firstNegativePerWindow.add(findFirstNegativeInWindow(negativeElementIndices, arr, windowStart, windowEnd));
+
+            windowEnd++;
+        }
+
+        return firstNegativePerWindow;
+    }
+
+    private static int findFirstNegativeInWindow(Deque<Integer> negativeElementIndices, int[] arr, int windowStart, int windowEnd) {
+        while (!negativeElementIndices.isEmpty() && negativeElementIndices.peek() < windowStart) {
+            negativeElementIndices.pollFirst();
+        }
+
+        if (!negativeElementIndices.isEmpty() && (negativeElementIndices.peek() >= windowStart && negativeElementIndices.peek() <= windowEnd)) {
+            return arr[negativeElementIndices.peek()];
+        }
+
+        return 0;
+    }
+}
