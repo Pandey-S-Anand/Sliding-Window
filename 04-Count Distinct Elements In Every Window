@@ -1,0 +1,82 @@
+//Bruteforce Approach
+
+class Solution {
+    ArrayList<Integer> countDistinct(int arr[], int k) {
+        ArrayList<Integer> distinctCountPerWindow = new ArrayList<>();
+
+        // Stores distinct elements of the current window
+        Set<Integer> distinctElements = new HashSet<>();
+
+        // Iterate over all possible window starting positions
+        for (int start = 0; start < arr.length; start++) {
+
+            // Expand the window from 'start'
+            for (int end = start; end < arr.length; end++) {
+
+                // Add current element to the set
+                distinctElements.add(arr[end]);
+
+                // Current window size
+                int subarraySize = end - start + 1;
+
+                // When window size becomes exactly k, record result
+                if (subarraySize == k) {
+                    distinctCountPerWindow.add(distinctElements.size());
+                    break; // Move to the next window
+                }
+            }
+
+            // Clear the set before processing the next window
+            distinctElements.clear();
+        }
+
+        return distinctCountPerWindow;
+    }
+}
+
+
+//Optimal Approach
+
+class Solution {
+    ArrayList<Integer> countDistinct(int arr[], int k) {
+        // Stores frequency of elements in the current window
+        Map<Integer, Integer> freqMap = new HashMap<>();
+
+        // Stores distinct element count for each window
+        ArrayList<Integer> distinctCountPerWindow = new ArrayList<>();
+
+        int windowStart = 0;
+        int windowEnd = 0;
+
+        // Build the first window of size k
+        while (windowEnd < k) {
+            freqMap.put(arr[windowEnd], freqMap.getOrDefault(arr[windowEnd], 0) + 1);
+            windowEnd++;
+        }
+
+        // Add distinct count for the first window
+        distinctCountPerWindow.add(freqMap.size());
+
+        // Slide the window across the array
+        while (windowEnd < arr.length) {
+            // Remove the element that goes out of the window
+            freqMap.put(arr[windowStart], freqMap.get(arr[windowStart]) - 1);
+            
+            // If an element’s frequency becomes zero, remove it from the map.
+            if (freqMap.get(arr[windowStart]) == 0) {
+                freqMap.remove(arr[windowStart]);
+            }
+            windowStart++;
+
+            // Add the new element entering the window
+            freqMap.put(arr[windowEnd], freqMap.getOrDefault(arr[windowEnd], 0) + 1);
+
+            // Add distinct count for the current window
+            distinctCountPerWindow.add(freqMap.size());
+
+            windowEnd++;
+        }
+
+        return distinctCountPerWindow;
+    }
+}
