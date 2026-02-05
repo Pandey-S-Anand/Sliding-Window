@@ -1,0 +1,249 @@
+//Bruteforce Approach
+
+class Solution {
+    public int[] getSubarrayBeauty(int[] arr, int k, int x) {
+        // Total number of windows of size k
+        int totalKSizeWindows = arr.length - k + 1;
+
+        // Stores the beauty (x-th smallest negative) for each window
+        int[] xthSmallestPerWindow = new int[totalKSizeWindows];
+
+        // Generate every possible subarray of size k 
+        for (int start = 0; start < arr.length; start++) {
+            for (int end = start; end < arr.length; end++) {
+                // Current subarray size
+                int subarraySize = end - start + 1;
+
+                // Process only windows of exact size k
+                if (subarraySize == k) {
+                    // Compute the x-th smallest negative number in the current window
+                    xthSmallestPerWindow[start] = getXthSmallestInWindow(arr, start, end, x);
+                    break; // Move to the next window
+                }
+            }
+        }
+
+        return xthSmallestPerWindow;
+    }
+
+    private int getXthSmallestInWindow(int[] arr, int start, int end, int x) {
+        // Min-heap to store negative numbers of the window
+        Queue<Integer> minHeap = new PriorityQueue<>();
+
+        // Collect negative numbers
+        for (int i = start; i <= end; i++) {
+            if (arr[i] < 0) {
+                minHeap.offer(arr[i]);
+            }
+        }
+
+        // Extract x-th smallest negative number
+        while (!minHeap.isEmpty()) {
+            int num = minHeap.poll();
+            x--;
+            if (x == 0) {
+                return num;
+            }
+        }
+
+        // Fewer than x negative numbers in the window
+        return 0;
+    }
+}
+
+
+
+// Better Approach
+
+class Solution {
+    public int[] getSubarrayBeauty(int[] arr, int k, int x) {
+        // Total number of windows of size k
+        int totalKSizeWindows = arr.length - k + 1;
+
+        // Stores the x-th smallest negative number for each window
+        int[] xthSmallestPerWindow = new int[totalKSizeWindows];
+
+        /*
+         * TreeMap stores:
+         * - key   → negative number
+         * - value → frequency of that negative number in the current window
+         *
+         * TreeMap keeps keys sorted, which allows us to find
+         * the x-th smallest negative number by traversing in order.
+         */
+        Map<Integer, Integer> freqMap = new TreeMap<>();
+
+        int windowStart = 0;
+        int windowEnd = 0;
+
+        /*
+         * Build the first window of size k.
+         * Only negative numbers are inserted into the frequency map,
+         * because positive numbers do not affect the beauty.
+         */
+        while (windowEnd < k) {
+            if (arr[windowEnd] < 0) {
+                freqMap.put(arr[windowEnd], freqMap.getOrDefault(arr[windowEnd], 0) + 1);
+            }
+            windowEnd++;
+        }
+
+        // Compute beauty for the first window
+        xthSmallestPerWindow[windowStart] = getXthSmallestInWindow(freqMap, x);
+
+        /*
+         * Slide the window across the array:
+         * - Remove the element going out of the window
+         * - Add the new element entering the window
+         * - Recompute the beauty for the current window
+         */
+        while (windowEnd < arr.length) {
+            // Remove the outgoing element (only if it is negative)
+            if (arr[windowStart] < 0) {
+                freqMap.put(arr[windowStart], freqMap.get(arr[windowStart]) - 1);
+
+                // Remove key completely if frequency becomes zero
+                if (freqMap.get(arr[windowStart]) == 0) {
+                    freqMap.remove(arr[windowStart]);
+                }
+            }
+
+            // Move window start forward
+            windowStart++;
+
+            // Add the incoming element (only if it is negative)
+            if (arr[windowEnd] < 0) {
+                freqMap.put(arr[windowEnd], freqMap.getOrDefault(arr[windowEnd], 0) + 1);
+            }
+
+            // Compute beauty for the current window
+            xthSmallestPerWindow[windowStart] = getXthSmallestInWindow(freqMap, x);
+            // Move windowEnd forward to slide the window by one position.
+            windowEnd++;
+        }
+
+        return xthSmallestPerWindow;
+    }
+
+    private int getXthSmallestInWindow(Map<Integer, Integer> freqMap, int x) {
+        // Traverse negatives in ascending order
+        for (int num : freqMap.keySet()) {
+            x -= freqMap.get(num);
+
+            // When x is exhausted, current number is the answer
+            if (x <= 0) {
+                return num;
+            }
+            /*
+            * Example clarification (IMPORTANT):
+            *
+            * arr = [-26, 9, 13, -26, 47, -39, -49, -26, 29]
+            * k = 9, x = 4
+            *
+            * Negative numbers in the window:
+            * [-26, -26, -39, -49, -26]
+            *
+            * After sorting (including duplicates):
+            * [-49, -39, -26, -26, -26]
+            *
+            * 1st smallest → -49
+            * 2nd smallest → -39
+            * 3rd smallest → -26
+            * 4th smallest → -26
+            *
+            * Important note:
+            * - We do NOT look for the x-th DISTINCT smallest negative number.
+            * - Duplicates are counted separately based on their frequency.
+            * - The x-th element is determined by position in the sorted list,
+            *   not by uniqueness.
+            *
+            * Hence, even though -26 is repeated, it occupies multiple positions
+            * in the sorted order, and the 4th smallest value is -26.
+            */
+        }
+
+        // If fewer than x negative numbers exist in the window, return 0
+        return 0;
+    }
+}
+
+
+
+//Optimal approach
+
+class Solution {
+    public int[] getSubarrayBeauty(int[] arr, int k, int x) {
+        int totalKSizeWindows = arr.length - k + 1;
+        int[] xthSmallestPerWindow = new int[totalKSizeWindows];
+
+        /*
+        * We only need to track NEGATIVE numbers for this problem.
+        *
+        * Since array values lie in the range [-50, 50],
+        * we use a frequency array of size 51.
+        *
+        * Mapping logic:
+        * - For a negative number `-v`, we store its frequency at index `v`
+        *   i.e., freqArray[-arr[i]]++
+        *
+        * This conversion is necessary because array indices must be non-negative.
+        */
+        int[] freqArray = new int[51];
+
+        int windowStart = 0;
+        int windowEnd = 0;
+
+        while (windowEnd < k) {
+            if (arr[windowEnd] < 0) {
+                freqArray[-arr[windowEnd]]++;
+            }
+            windowEnd++;
+        }
+
+        xthSmallestPerWindow[windowStart] = getXthSmallestInWindow(freqArray, x);
+
+        while (windowEnd < arr.length) {
+            if (arr[windowStart] < 0) {
+                freqArray[-arr[windowStart]]--;
+            }
+
+            windowStart++;
+
+            if (arr[windowEnd] < 0) {
+                freqArray[-arr[windowEnd]]++;
+            }
+
+            xthSmallestPerWindow[windowStart] = getXthSmallestInWindow(freqArray, x);
+            windowEnd++;
+        }
+
+        return xthSmallestPerWindow;
+    }
+
+    /*
+     * Finds the x-th smallest negative number using the frequency array.
+     *
+     * Important insight:
+     * - All numbers stored are NEGATIVE.
+     * - Among negative numbers, a number with a larger absolute value
+     *   is actually smaller (e.g., -50 < -10).
+     *
+     * Therefore:
+     * - We iterate the frequency array from index 50 down to 1
+     *   (representing values from -50 to -1).
+     * - We subtract frequencies until x becomes <= 0.
+     * - The moment x <= 0, the corresponding negative value is
+     *   the x-th smallest element.
+     */
+    private int getXthSmallestInWindow(int[] freqArray, int x) {
+        for (int num = 50; num >= 1; num--) {
+            x -= freqArray[num];
+
+            if (x <= 0) {
+                return -num;
+            }
+        }
+
+        return 0;
+    }
+}
