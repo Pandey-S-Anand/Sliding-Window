@@ -1,29 +1,85 @@
 //Bruteforce Approach
 
 class Solution {
-    long substrCount(String str, int k) {
-        long validSubstringCount = 0;
-        Set<Character> distinctChars = new HashSet<>();
+    /*
+    Example:
+    
+    String str = "abcbfr", k = 3
+    
+    All possible substrings:
+    
+    [a]
+    [a, b]
+    [a, b, c]
+    [a, b, c, b]
+    [a, b, c, b, f]
+    [a, b, c, b, f, r]
+    
+    [b]
+    [b, c]
+    [b, c, b]
+    [b, c, b, f]
+    [b, c, b, f, r]
+    
+    [c]
+    [c, b]
+    [c, b, f]
+    [c, b, f, r]
+    
+    [b]
+    [b, f]
+    [b, f, r]
+    
+    [f]
+    [f, r]
+    
+    [r]
+    
+    Substrings having exactly 3 distinct characters:
+    [a, b, c]       → a=1, b=1, c=1
+    [b, c, b, f]    → b=2, c=1, f=1
+    [c, b, f]       → c=1, b=1, f=1
+    [b, f, r]       → b=1, f=1, r=1
+    */
+    public int countSubstr(String str, int k) {
+        // Frequency array for characters 'a' to 'z'
+        int[] freqArr = new int[26];
 
+        int distinctChars = 0;
+
+        // Fix the starting index of the substring
         for (int start = 0; start < str.length(); start++) {
+            // Expand the substring from 'start'
             for (int end = start; end < str.length(); end++) {
-                if ((end - start + 1) < k) {
-                    continue;
-                }
+                // Include the new character at 'end'
+                freqArr[str.charAt(end) - 'a']++;
 
-                for (int range = start; range <= end; range++) {
-                    distinctChars.add(str.charAt(range));
-                }
+                int substringLength = end - start + 1;
 
-                if (distinctChars.size() == k) {
-                    validSubstringCount++;
+                // Only substrings of length >= k can have k distinct characters
+                if (substringLength >= k && haveKDistinctChars(freqArr, k)) {
+                    distinctChars++;
                 }
+            }
 
-                distinctChars.clear();
+            // Reset frequency array before moving to next start index
+            Arrays.fill(freqArr, 0);
+        }
+
+        return distinctChars;
+    }
+
+    private boolean haveKDistinctChars(int[] freqArr, int k) {
+        int distinctChars = 0;
+
+        // Count distinct characters
+        for (int i = 0; i < 26; i++) {
+            if (freqArr[i] != 0) {
+                distinctChars++;
             }
         }
 
-        return validSubstringCount;
+        return distinctChars == k;
     }
 }
 
