@@ -1,0 +1,77 @@
+//Bruteforce Approach
+
+class Solution {
+    public int numOfSubarrays(int[] arr, int k, int threshold) {
+        int count = 0;
+
+        // Generate all possible subarrays
+        for (int start = 0; start < arr.length; start++) {
+            int sum = 0;
+            // Expand the subarray from 'start'
+            for (int end = start; end < arr.length; end++) {
+                sum += arr[end];
+
+                int subarraySize = end - start + 1;
+
+                // Process only subarrays of exact size k
+                if (subarraySize == k) {
+                    // Check if the average meets the threshold
+                    if (isAvgAboveThreshold(sum, k, threshold)) {
+                        count++;
+                    }
+
+                    break; // Move to the next starting index
+                }
+            }
+        }
+
+        return count;
+    }
+
+    private boolean isAvgAboveThreshold(int sum, int length, int threshold) {
+        double avg = (double) sum / length;
+        return avg >= threshold;
+    }
+}
+
+
+//Optimal Approach
+
+class Solution {
+    public int numOfSubarrays(int[] arr, int k, int threshold) {
+        int windowStart = 0;
+        int windowEnd = 0;
+        int sum = 0;
+        int count = 0;
+
+        // Build the first window of size k
+        while (windowEnd < k) {
+            sum += arr[windowEnd++];
+        }
+
+        // Check the average of the first window
+        if (isAvgAboveThreshold(sum, k, threshold)) {
+            count++;
+        }
+
+        // Process the second window and all subsequent windows
+        while (windowEnd < arr.length) {
+            // Remove the outgoing element (left boundary)
+            sum -= arr[windowStart++];
+            // Add the incoming element (right boundary)
+            sum += arr[windowEnd++];
+
+            // Check if current window average meets the threshold
+            if (isAvgAboveThreshold(sum, k, threshold)) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private boolean isAvgAboveThreshold(int sum, int length, int threshold) {
+        double avg = (double) sum / length;
+        return avg >= threshold;
+    }
+}
