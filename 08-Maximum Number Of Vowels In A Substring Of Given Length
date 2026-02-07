@@ -1,0 +1,165 @@
+//Bruteforce Approach
+
+class Solution {
+    public int maxVowels(String str, int k) {
+        int vowelCount = 0, maxVowelCount = 0;
+
+        // Generate every possible substring of length k.
+        for (int start = 0; start < str.length(); start++) {
+            vowelCount = 0;
+
+            // Expand the substring from 'start'
+            for (int end = start; end < str.length(); end++) {
+                // Count vowel in the current substring
+                if (isVowel(str.charAt(end))) {
+                    vowelCount++;
+                }
+
+                int substringLength = end - start + 1;
+
+                // Process only substrings of exact length k
+                if (substringLength == k) {
+                    // Update the maximum vowel count
+                    maxVowelCount = Math.max(maxVowelCount, vowelCount);
+                    break; // Move to the next starting index
+                }
+            }
+        }
+
+        return maxVowelCount;
+    }
+
+    private boolean isVowel(char ch) {
+        return ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u';
+    }
+}
+
+
+//Better Approach
+
+class Solution {
+    public int maxVowels(String str, int k) {
+        /*
+         * Frequency array for characters 'a' to 'z'.
+         * Only vowel frequencies are updated;
+         * consonant indices remain zero.
+         */
+        int[] freqArr = new int[26];
+
+        int windowStart = 0;
+        int windowEnd = 0;
+
+        /*
+         * Build the first window of size k.
+         * Count vowel frequencies for the initial window.
+         */
+        while (windowEnd < k) {
+            char ch = str.charAt(windowEnd);
+
+            if (isVowel(ch)) {
+                freqArr[ch - 'a']++;
+            }
+
+            windowEnd++;
+        }
+
+        // Vowel count in the first window
+        int maxVowelCount = getVowelCountInWindow(freqArr);
+
+        //Process the second window and all following windows
+        while (windowEnd < str.length()) {
+            // Remove the outgoing character if it is vowel
+            char ch = str.charAt(windowStart);
+            if (isVowel(ch)) {
+                freqArr[ch - 'a']--;
+            }
+            windowStart++;
+
+            // Add the incoming character if it is vowel
+            ch = str.charAt(windowEnd);
+            if (isVowel(ch)) {
+                freqArr[ch - 'a']++;
+            }
+
+            // Update the maximum vowel count
+            maxVowelCount = Math.max(maxVowelCount, getVowelCountInWindow(freqArr));
+
+            windowEnd++;
+        }
+
+        return maxVowelCount;
+    }
+
+    private boolean isVowel(char ch) {
+        return ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u';
+    }
+
+    /**
+     * Computes the total number of vowels in the current window
+     * using the frequency array.
+     *
+     * Since only vowels have non-zero frequencies,
+     * summing the array gives the total vowel count.
+     */
+    private int getVowelCountInWindow(int[] freqArr) {
+        int vowelCount = 0;
+
+        for (int i = 0; i < freqArr.length; i++) {
+            if (freqArr[i] != 0) {
+                vowelCount += freqArr[i];
+            }
+        }
+
+        return vowelCount;
+    }
+}
+
+
+//Optimal Approach
+
+class Solution {
+    public int maxVowels(String str, int k) {
+        int vowelCount = 0, maxVowelCount = 0;
+        int windowStart = 0;
+        int windowEnd = 0;
+
+        // Build the first window of size k
+        while (windowEnd < k) {
+            if (isVowel(str.charAt(windowEnd))) {
+                vowelCount++;
+            }
+            windowEnd++;
+        }
+
+        // Vowel count for the first window
+        maxVowelCount = vowelCount;
+
+        //Process the second window and all following windows
+        while (windowEnd < str.length()) {
+            // Remove the outgoing character if it is vowel
+            if (isVowel(str.charAt(windowStart))) {
+                vowelCount--;
+            }
+
+            // Move the left boundary forward
+            windowStart++;
+
+            // Add the incoming character if it is vowel
+            if (isVowel(str.charAt(windowEnd))) {
+                vowelCount++;
+            }
+
+            // Update the maximum vowel count seen so far
+            maxVowelCount = Math.max(maxVowelCount, vowelCount);
+
+            // Move the right boundary forward to slide the window
+            windowEnd++;
+        }
+
+        return maxVowelCount;
+    }
+
+    private boolean isVowel(char ch) {
+        return ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u';
+    }
+}
