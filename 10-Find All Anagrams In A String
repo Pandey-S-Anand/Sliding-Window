@@ -1,0 +1,184 @@
+//Bruteforce Approach
+
+class Solution {
+    /**
+     * Definition of Anagram:
+     * - Two strings are anagrams if they contain the same characters
+     *   with the same frequencies, regardless of order.
+     * Example:
+     * pattern = "abc"
+     * valid anagrams: "abc", "bca", "cab"
+     * invalid: "ab", "abcd", "abd"
+     */
+    public List<Integer> findAnagrams(String text, String pattern) {
+        List<Integer> startIndices = new ArrayList<>();
+
+        // Frequency array to count characters in the current substring
+        int[] freqArr = new int[26];
+
+        // Generate every possible substring of length equal to the pattern.
+        for (int start = 0; start < text.length(); start++) {
+            // Expand substring from the current start index
+            for (int end = start; end < text.length(); end++) {
+                // Add current character to frequency array
+                freqArr[text.charAt(end) - 'a']++;
+
+                int substringLength = end - start + 1;
+
+                // Process only substrings of exact pattern length
+                if (substringLength == pattern.length()) {
+                    // Check if current substring is an anagram
+                    if (isAnagram(pattern, freqArr)) {
+                        startIndices.add(start);
+                    }
+
+                    // Stop expanding this window and move to next start
+                    break;
+                }
+            }
+
+            // Reset frequency array for the next starting index
+            Arrays.fill(freqArr, 0);
+        }
+
+        return startIndices;
+    }
+
+    /**
+    * Checks whether the current window is an anagram of the pattern.
+    *
+    * Logic:
+    * - For each character in the pattern:
+    *     - If its frequency is zero in the window, it means either:
+    *         1) The character is not present in the current window at all, OR
+    *         2) The pattern contains this character more times than the window does.
+    *       In both cases, the window cannot be an anagram.
+    *     - Otherwise, decrement the frequency to account for one matched occurrence.
+    * - If all characters of the pattern are successfully matched,
+    *   the current window is an anagram.
+    */
+    private boolean isAnagram(String pattern, int[] freqArr) {
+        for (int i = 0; i < pattern.length(); i++) {
+            int idx = pattern.charAt(i) - 'a';
+
+            if (freqArr[idx] == 0) {
+                return false;
+            }
+
+            freqArr[idx]--;
+        }
+
+        return true;
+    }
+}
+
+
+//Better Approach
+
+class Solution {
+    /**
+     * ------------------------------------------------------------
+     * Why this is a FIXED-SIZE sliding window problem:
+     * ------------------------------------------------------------
+     * - Any anagram of `pattern` must have EXACTLY the same length
+     *   as the pattern.
+     * - Therefore, the window size is fixed and equal to
+     *   pattern.length().
+     * - We slide this fixed-size window over the text and check
+     *   whether the current window forms an anagram of the pattern.
+     */
+    public List<Integer> findAnagrams(String text, String pattern) {
+        // If pattern is longer than text, no anagram is possible
+        if (pattern.length() > text.length()) {
+            return Collections.emptyList();
+        }
+
+        int windowStart = 0;
+        int windowEnd = 0;
+
+        // Fixed window size equals pattern length
+        int windowSize = pattern.length();
+
+        // Stores starting indices of valid anagrams
+        List<Integer> startIndices = new ArrayList<>();
+
+        /*
+         * Frequency array for the current window.
+         * freqArr[i] represents how many times character (char)('a' + i)
+         * appears in the current sliding window.
+         */
+        int[] freqArr = new int[26];
+
+        /*
+         * Build the first window of size = pattern.length()
+         * Count frequencies of characters in the initial window.
+         */
+        while (windowEnd < windowSize) {
+            freqArr[text.charAt(windowEnd) - 'a']++;
+            windowEnd++;
+        }
+
+        // Check if the first window is an anagram of the pattern
+        if (isAnagram(pattern, freqArr)) {
+            startIndices.add(windowStart);
+        }
+
+        /*
+         * Slide the window across the text:
+         * - Remove the character leaving the window (windowStart)
+         * - Add the character entering the window (windowEnd)
+         * - After each slide, check if the window is an anagram
+         */
+        while (windowEnd < text.length()) {
+            // Remove outgoing character (left boundary of window)
+            freqArr[text.charAt(windowStart) - 'a']--;
+            windowStart++;
+
+            // Add incoming character (right boundary of window)
+            freqArr[text.charAt(windowEnd) - 'a']++;
+
+            // Check if current window forms an anagram
+            if (isAnagram(pattern, freqArr)) {
+                startIndices.add(windowStart);
+            }
+
+            // Move the right boundary forward
+            windowEnd++;
+        }
+
+        return startIndices;
+    }
+
+    /**
+     * Checks whether the current window is an anagram of the pattern.
+     *
+     * Logic:
+     * - Clone the window frequency array to avoid modifying the original state.
+     * - For each character in the pattern:
+     *     - If its frequency is zero in the window, it means either:
+     *         1) The character is not present in the current window at all, OR
+     *         2) The pattern contains this character more times than the window does.
+     *       In both cases, the window cannot be an anagram.
+     *     - Otherwise, decrement the frequency to account for one matched occurrence.
+     * - If all characters of the pattern are successfully matched,
+     *   the current window is an anagram.
+     */
+    private boolean isAnagram(String pattern, int[] freqArr) {
+        freqArr = freqArr.clone();
+
+        for (int i = 0; i < pattern.length(); i++) {
+            int idx = pattern.charAt(i) - 'a';
+
+            if (freqArr[idx] == 0) {
+                return false;
+            }
+            freqArr[idx]--;
+        }
+
+        return true;
+    }
+}
+
+
+//Optimal Approach
+
