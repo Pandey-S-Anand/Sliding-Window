@@ -1,0 +1,271 @@
+//Bruteforce Approach
+
+public class Solution {
+    public static long sumOfMaxAndMin(ArrayList<Integer> arr, int n, int k) {
+        long totalSum = 0;
+
+        // Generate all possible windows of size k
+        for (int start = 0; start < n; start++) {
+            // Initialize min and max for the current window
+            int min = arr.get(start);
+            int max = arr.get(start);
+
+            // Expand the window from 'start'
+            for (int end = start; end < n; end++) {
+                // Update minimum and maximum values
+                min = Math.min(min, arr.get(end));
+                max = Math.max(max, arr.get(end));
+
+                int subarrayLength = end - start + 1;
+
+                // Process only windows of exact size k
+                if (subarrayLength == k) {
+                    // Add both min and max of the window
+                    totalSum += min;
+                    totalSum += max;
+                    break; // Move to the next window
+                }
+            }
+        }
+
+        return totalSum;
+    }
+}
+
+
+//Better Approach
+
+public class Solution {
+    public static long sumOfMaxAndMin(ArrayList<Integer> arr, int n, int k) {
+        long totalSum = 0;
+
+        /*
+         * Max heap storing indices.
+         * Comparator uses values at those indices to order elements.
+         */
+        Queue<Integer> maxHeap = new PriorityQueue<>((idx1, idx2) -> Integer.compare(arr.get(idx2), arr.get(idx1)));
+
+        /*
+         * Min heap storing indices.
+         * Comparator uses values at those indices to order elements.
+         */
+        Queue<Integer> minHeap = new PriorityQueue<>((idx1, idx2) -> Integer.compare(arr.get(idx1), arr.get(idx2)));
+
+        int windowStart = 0;
+        int windowEnd = 0;
+
+        // Build the first window of size k
+        while (windowEnd < k) {
+            minHeap.offer(windowEnd);
+            maxHeap.offer(windowEnd++);
+        }
+
+        // Add min and max of the first window
+        totalSum += arr.get(maxHeap.peek());
+        totalSum += arr.get(minHeap.peek());
+
+        // Slide the window
+        while (windowEnd < n) {
+            // Move window start forward
+            windowStart++;
+
+            // Add new element index to both heaps
+            maxHeap.offer(windowEnd);
+            minHeap.offer(windowEnd);
+
+            // Add max and min for the current window
+            totalSum += getMaxInWindow(maxHeap, arr, windowStart);
+            totalSum += getMinInWindow(minHeap, arr, windowStart);
+
+            windowEnd++;
+        }
+
+        return totalSum;
+    }
+
+    /**
+     * Returns the maximum element of the current sliding window.
+     *
+     * Lazy removal:
+     * - The heap may contain elements from previous windows.
+     * - If the current maximum element (heap peek) belongs to a
+     *   previous window (i.e., its index < windowStart),
+     *   it is removed from the heap.
+     * - This is repeated until the maximum element belongs
+     *   to the current window.
+     */
+    private static int getMaxInWindow(Queue<Integer> maxHeap, List<Integer> arr, int windowStart) {
+        while (!maxHeap.isEmpty() && maxHeap.peek() < windowStart) {
+            maxHeap.poll();
+        }
+
+        return arr.get(maxHeap.peek());
+    }
+
+    /**
+    * Returns the minimum element of the current window.
+    *
+    * Lazy removal:
+    * - The heap may contain elements from previous windows.
+    * - If the current minimum element (heap peek) belongs to a
+    *   previous window (i.e., its index < windowStart),
+    *   it is removed from the heap.
+    * - This is repeated until the minimum element belongs
+    *   to the current window.
+    */
+    private static int getMinInWindow(Queue<Integer> minHeap, List<Integer> arr, int windowStart) {
+        while (!minHeap.isEmpty() && minHeap.peek() < windowStart) {
+            minHeap.poll();
+        }
+
+        return arr.get(minHeap.peek());
+    }
+}
+
+
+
+//Optimal Approach
+
+public class Solution {
+    /*
+    * Intuition (for Decresing Queue -  used to find MAXIMUM in the window):
+    *
+    * The deque always contains only those elements that can still become
+    * the maximum in some future window.
+    *
+    * We keep elements that are smaller but to the RIGHT of the current maximum
+    * because they are potential candidates for the maximum when the current
+    * maximum (at the front of the deque) slides out of the window.
+    *
+    * Why can we safely remove smaller elements to the LEFT?
+    *
+    * If an element A is smaller than a newer element B and A appears to the
+    * left of B, then A can never be the maximum of any future window that
+    * contains B.
+    *
+    * Reason:
+    * - B is already larger than A, so B will always dominate A in any window
+    *   containing both.
+    * - B enters later and stays longer in future windows, while A will slide
+    *   out earlier.
+    * - Even if a newer element enters, it will either replace B (if larger)
+    *   or B will remain the maximum.
+    *
+    * Therefore, for as long as the current maximum remains inside the window,
+    * any smaller element to its left is useless. When the maximum slides out,
+    * the deque already contains the next best candidates from the right.
+    * 
+    * Intuition (for Increasing Queue - used to find MINIMUM in the window):
+    *
+    * The deque always contains only those elements that can still become
+    * the minimum in some future window.
+    *
+    * We keep elements that are larger but to the RIGHT of the current minimum
+    * because they are potential candidates for the minimum when the current
+    * minimum (at the front of the deque) slides out of the window.
+    *
+    * Why can we safely remove larger elements to the LEFT?
+    *
+    * If an element A is larger than a newer element B and A appears to the
+    * left of B, then A can never be the minimum of any future window that
+    * contains B.
+    *
+    * Reason:
+    * - B is already smaller than A, so B will always dominate A in any window
+    *   containing both.
+    * - B enters later and stays longer in future windows, while A will slide
+    *   out earlier.
+    * - Even if a newer element enters, it will either replace B (if smaller)
+    *   or B will remain the minimum.
+    *
+    * Therefore, for as long as the current minimum remains inside the window,
+    * any larger element to its left is useless. When the minimum slides out,
+    * the deque already contains the next best candidates from the right.
+    */
+    public static long sumOfMaxAndMin(ArrayList<Integer> arr, int n, int k) {
+        long totalSum = 0;
+        Deque<Integer> decreasingQueue = new ArrayDeque<>();
+        Deque<Integer> increasingQueue = new ArrayDeque<>();
+
+        int windowStart = 0;
+        int windowEnd = 0;
+
+        // Process the first window separately
+        while (windowEnd < k) {
+            while (!decreasingQueue.isEmpty() && arr.get(windowEnd) > arr.get(decreasingQueue.peekLast())) {
+                decreasingQueue.pollLast();
+            }
+
+            while (!increasingQueue.isEmpty() && arr.get(windowEnd) < arr.get(increasingQueue.peekLast())) {
+                increasingQueue.pollLast();
+            }
+
+            decreasingQueue.offerLast(windowEnd);
+            increasingQueue.offerLast(windowEnd++);
+        }
+
+        totalSum += arr.get(decreasingQueue.peekFirst()); // The maximum for the first window
+        totalSum += arr.get(increasingQueue.peekFirst()); // The minimum for the first window
+
+        // Process the second window and all subsequent windows
+        while (windowEnd < n) {
+            windowStart++;
+            totalSum += getMaxInWindow(decreasingQueue, arr, windowStart, windowEnd);
+            totalSum += getMinInWindow(increasingQueue, arr, windowStart, windowEnd);
+            windowEnd++;
+        }
+
+        return totalSum;
+    }
+
+    private static int getMaxInWindow(Deque<Integer> decreasingQueue, List<Integer> arr, int windowStart, int windowEnd) {
+        while (!decreasingQueue.isEmpty() && arr.get(windowEnd) > arr.get(decreasingQueue.peekLast())) {
+            decreasingQueue.pollLast();
+        }
+
+        decreasingQueue.offerLast(windowEnd);
+        /*
+        * Since the sliding window moves by 1 position at each step,
+        * the maximum element, which is always at the front of the deque
+        * (because the deque is maintained in decreasing order), is the
+        * only element that can potentially fall out of the window.
+        * 
+        * As the left boundary of the window advances by 1 index, we need
+        * to check if the element at the front of the deque is outside the
+        * current window. If it is, we remove it to ensure the deque only
+        * contains indices within the current window.
+        * Ex: [5,3,4] and k = 1
+        */
+        if (decreasingQueue.peekFirst() < windowStart) {
+            decreasingQueue.pollFirst();
+        }
+
+        return arr.get(decreasingQueue.peekFirst());
+    }
+
+    private static int getMinInWindow(Deque<Integer> increasingQueue, List<Integer> arr, int windowStart, int windowEnd) {
+        while (!increasingQueue.isEmpty() && arr.get(windowEnd) < arr.get(increasingQueue.peekLast())) {
+            increasingQueue.pollLast();
+        }
+
+        increasingQueue.offerLast(windowEnd);
+        /*
+         * Since the sliding window moves by 1 position at each step,
+         * the minimum element, which is always at the front of the deque
+         * (because the deque is maintained in increasing order), is the
+         * only element that can potentially fall out of the window.
+         *
+         * As the left boundary of the window advances by 1 index, we need
+         * to check if the element at the front of the deque is outside the
+         * current window. If it is, we remove it to ensure the deque only
+         * contains indices within the current window.
+         *
+         * Ex: [3,4] and k = 1
+         */
+        if (increasingQueue.peekFirst() < windowStart) {
+            increasingQueue.pollFirst();
+        }
+
+        return arr.get(increasingQueue.peekFirst());
+    }
+}
