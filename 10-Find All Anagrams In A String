@@ -235,11 +235,6 @@ class Solution {
             startIndices.add(windowStart);
         }
 
-        /*
-         * Slide the window across the text:
-         * - Character at windowStart leaves the window
-         * - Character at windowEnd enters the window
-         */
         while (windowEnd < text.length()) {
             /*
              * ------------------------------------------------------------
@@ -257,7 +252,6 @@ class Solution {
                 patternFreqMap.put(outgoing, patternFreqMap.get(outgoing) + 1);
             }
 
-            // Move the left boundary forward
             windowStart++;
 
             /*
@@ -275,18 +269,10 @@ class Solution {
                 patternFreqMap.put(incoming, patternFreqMap.get(incoming) - 1);
             }
 
-            /*
-             * ------------------------------------------------------------
-             * IMPORTANT: What does NEGATIVE frequency mean?
-             * ------------------------------------------------------------
-             * - freq < 0 means the window has MORE occurrences of this
-             *   character than required by the pattern.
-             */
             if (isAnagram(patternFreqMap)) {
                 startIndices.add(windowStart);
             }
 
-            // Move the right boundary forward
             windowEnd++;
         }
 
@@ -301,8 +287,8 @@ class Solution {
      * - i.e., all values in the frequency map are exactly zero.
      *
      * NOTE:
-     * - Negative values are allowed and simply indicate
-     *   extra occurrences of a character.
+     * - Negative values means the window has MORE occurrences of this
+     *   character than required by the pattern.
      * - Any positive value means some character is still missing.
      */
     private boolean isAnagram(Map<Character, Integer> patternFreqMap) {
