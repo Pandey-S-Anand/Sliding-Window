@@ -72,7 +72,7 @@ class Solution {
 }
 
 
-//Better Approach
+//Good Approach
 
 class Solution {
     /**
@@ -179,7 +179,7 @@ class Solution {
 }
 
 
-//Optimal Approach
+//Better Approach
 
 class Solution {
     public List<Integer> findAnagrams(String text, String pattern) {
@@ -297,6 +297,85 @@ class Solution {
                 return false;
             }
         }
+        return true;
+    }
+}
+
+
+//Optimal Approach
+
+class Solution {
+    public List<Integer> findAnagrams(String text, String pattern) {
+        if (pattern.length() > text.length()) {
+            return Collections.emptyList();
+        }
+
+        List<Integer> startIndices = new ArrayList<>();
+
+        /*
+         * patternFreqArr:
+         * Stores frequency of each character in the pattern.
+         *
+         * windowFreqArr:
+         * Stores frequency of each character in the current window of text.
+         */
+        int[] patternFreqArr = new int[26];
+        int[] windowFreqArr = new int[26];
+
+        // Build frequency array for the pattern
+        for (int i = 0; i < pattern.length(); i++) {
+            patternFreqArr[pattern.charAt(i) - 'a']++;
+        }
+
+        int windowStart = 0;
+        int windowEnd = 0;
+        int windowSize = pattern.length();
+
+        /*
+         * Build the FIRST window of size = pattern length.
+         * Count frequencies of characters in this initial window.
+         */
+        while (windowEnd < windowSize) {
+            windowFreqArr[text.charAt(windowEnd) - 'a']++;
+            windowEnd++;
+        }
+
+        // If first window's frequency matches the pattern, first window is an anagram
+        if (areFrequenciesEqual(patternFreqArr, windowFreqArr)) {
+            startIndices.add(windowStart);
+        }
+
+        while (windowEnd < text.length()) {
+            // Remove outgoing character
+            windowFreqArr[text.charAt(windowStart++) - 'a']--;
+
+            // Add incoming character
+            windowFreqArr[text.charAt(windowEnd++) - 'a']++;
+
+            // Check if current window is a anagram of the pattern
+            if (areFrequenciesEqual(patternFreqArr, windowFreqArr)) {
+                startIndices.add(windowStart);
+            }
+        }
+
+        return startIndices;
+    }
+
+    /**
+     * Compares two frequency arrays.
+     *
+     * Logic:
+     * - If frequencies of ALL characters ('a' to 'z') are equal,
+     *   then the two strings are anagrams of each other.
+     *
+     */
+    private boolean areFrequenciesEqual(int[] freqArr1, int[] freqArr2) {
+        for (int i = 0; i < 26; i++) {
+            if (freqArr1[i] != freqArr2[i]) {
+                return false;
+            }
+        }
+
         return true;
     }
 }
