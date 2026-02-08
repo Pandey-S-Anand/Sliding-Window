@@ -1,153 +1,334 @@
 //Bruteforce Approach
 
 class Solution {
-    private List<String> permutations;
-
+    /**
+     * Brute-force approach to check whether str2
+     * contains any permutation of str1.
+     *
+     * ------------------------------------------------------------
+     * What does "permutation" mean here?
+     * ------------------------------------------------------------
+     * - A permutation of str1 is any reordering of its characters.
+     * - Example:
+     *     str1 = "ab"
+     *     Valid permutations: "ab", "ba"
+     *
+     * If any substring of str2 of length = str1.length()
+     * is a permutation of str1, we return true.
+     *
+     */
     public boolean checkInclusion(String str1, String str2) {
-        permutations = new ArrayList<>();
-        generatePermutations(str1);
-        Set<String> substrings = generateSubstrings(str2);
-
-        for (String permutation : permutations) {
-            if (substrings.contains(permutation)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private List<String> generatePermutations(String str) {
-        permutations = new ArrayList<>();
-        generatePermutations(str, new StringBuilder(), new boolean[str.length()]);
-        return permutations;
-    }
-
-    private void generatePermutations(String str, StringBuilder permutation, boolean[] visited) {
-        if (permutation.length() == str.length()) {
-            permutations.add(permutation.toString());
-            return;
-        }
-
-        for (int i = 0; i < str.length(); i++) {
-            if (!visited[i]) {
-                visited[i] = true;
-                permutation.append(str.charAt(i));
-                generatePermutations(str, permutation, visited);
-                permutation.setLength(permutation.length() - 1);
-                visited[i] = false;
-            }
-        }
-    }
-
-    private Set<String> generateSubstrings(String str) {
-        Set<String> substrings = new HashSet<>();
-        for (int start = 0; start < str.length(); start++) {
-            for (int end = start; end < str.length(); end++) {
-                substrings.add(str.substring(start, end + 1));
-            }
-        }
-        return substrings;
-    }
-}
-
-
-//Improved Approach
-
-class Solution {
-    private Set<String> substrings;
-
-    public boolean checkInclusion(String str1, String str2) {
-        substrings = generateSubstrings(str2);
-        return generatePermutations(str1);
-    }
-
-    private boolean generatePermutations(String str) {
-        return generatePermutations(str, new StringBuilder(), new boolean[str.length()]);
-    }
-
-    private boolean generatePermutations(String str, StringBuilder permutation, boolean[] visited) {
-        if (permutation.length() == str.length()) {
-            if (substrings.contains(permutation.toString())) {
-                return true;
-            }
+        // If str1 is longer than str2, it is impossible for any substring of str2 to be a permutation of str1.
+        if (str1.length() > str2.length()) {
             return false;
         }
+        
+        // Frequency array for the current substring window
+        int[] freqArr = new int[26];
 
-        for (int i = 0; i < str.length(); i++) {
-            if (!visited[i]) {
-                visited[i] = true;
-                permutation.append(str.charAt(i));
-                if (generatePermutations(str, permutation, visited)) {
-                    return true;
+        // Generate all possible substrings of str2
+        for (int start = 0; start < str2.length(); start++) {
+            // Expand substring starting at index 'start'
+            for (int end = start; end < str2.length(); end++) {
+                // Add current character to frequency array
+                freqArr[str2.charAt(end) - 'a']++;
+
+                int substringLength = end - start + 1;
+
+                // Process only substrings of exact length = str1.length()
+                if (substringLength == str1.length()) {
+                    // Check if current substring is a permutation of str1
+                    if (containsPermutation(str1, freqArr)) {
+                        return true;
+                    }
+
+                    // Stop expanding this window and move to next start
+                    break;
                 }
-                permutation.setLength(permutation.length() - 1);
-                visited[i] = false;
             }
+
+            // Reset frequency array for the next starting index
+            Arrays.fill(freqArr, 0);
         }
 
-        // This return statement will be executed when all permutations have been generated, and none of them are found in the set of substrings of str2.
         return false;
     }
 
-    private Set<String> generateSubstrings(String str) {
-        Set<String> substrings = new HashSet<>();
-        for (int start = 0; start < str.length(); start++) {
-            for (int end = start; end < str.length(); end++) {
-                substrings.add(str.substring(start, end + 1));
+    /**
+     * Checks whether the current window can form
+     * a permutation of str1.
+     *
+     * Logic:
+     * - For each character in str1:
+     *     - If its frequency in the window is zero,
+     *       it means:
+     *         1) The character does not exist in the window, OR
+     *         2) The window does not have enough occurrences.
+     *       Hence, it cannot be a permutation.
+     *     - Otherwise, decrement its frequency to mark usage.
+     *
+     * If all characters of str1 are successfully matched,
+     * the window contains a valid permutation.
+     */
+    private boolean containsPermutation(String str, int[] freqArr) {
+        for (int i = 0; i < str.length(); i++) {
+            int idx = str.charAt(i) - 'a';
+
+            if (freqArr[idx] == 0) {
+                return false;
             }
+
+            freqArr[idx]--;
         }
-        return substrings;
+
+        return true;
     }
 }
 
 
-//Optimal Approach
 
-//Naive implementation
+//Good Approach
 
 class Solution {
-    public boolean checkInclusion(String str1, String str2) {
-        // If str2 is shorter than str1, it's impossible for str1 to be a substring
-        if (str2.length() < str1.length()) {
+    /**
+     * Checks whether text contains any permutation of pattern.
+     *
+     * ------------------------------------------------------------
+     * Key Insight:
+     * ------------------------------------------------------------
+     * - A permutation of a string is simply an anagram of that string.
+     * - Therefore:
+     *     "Does text contain a permutation of pattern?"
+     *   becomes:
+     *     "Does text contain any substring which is an anagram of pattern?"
+     *
+     * ------------------------------------------------------------
+     * Why this is a FIXED-SIZE Sliding Window problem:
+     * ------------------------------------------------------------
+     * - Any permutation (anagram) of pattern must have the same length
+     *   as pattern.
+     * - Hence, we slide a window of fixed size = pattern.length()
+     *   across text and check each window.
+     */
+    public boolean checkInclusion(String pattern, String text) {
+        // If pattern is longer than text, permutation is impossible
+        if (pattern.length() > text.length()) {
             return false;
         }
 
-        int start = 0; // Start index of the window in str2
-        int end = str1.length() - 1; // End index of the window in str2
+        int windowStart = 0;
+        int windowEnd = 0;
 
-        // Maintain a window of size str1.length() to generate all substrings of str2 of the same size
-        while (end < str2.length()) {
+        // Fixed window size equals length of pattern
+        int windowSize = pattern.length();
+
+        /*
+        * Frequency array for the current window.
+        * freqArr[i] represents how many times character (char)('a' + i)
+        * appears in the current sliding window.
+        */
+        int[] freqArr = new int[26];
+
+        /*
+         * Build the first window of size = pattern.length()
+         * Count frequencies of characters in the initial window.
+         */
+        while (windowEnd < windowSize) {
+            freqArr[text.charAt(windowEnd) - 'a']++;
+            windowEnd++;
+        }
+
+        // Check if the first window is an anagram of pattern
+        if (isAnagram(pattern, freqArr)) {
+            return true;
+        }
+
+        /*
+         * Slide the window across text:
+         * - Remove the character leaving the window (left boundary)
+         * - Add the character entering the window (right boundary)
+         * - After each slide, check if the window is an anagram
+         */
+        while (windowEnd < text.length()) {
+            // Remove outgoing character
+            freqArr[text.charAt(windowStart) - 'a']--;
+            windowStart++;
+
+            // Add incoming character
+            freqArr[text.charAt(windowEnd) - 'a']++;
+
+            // Check if current window forms a permutation of pattern
+            if (isAnagram(pattern, freqArr)) {
+                return true;
+            }
+
+            windowEnd++;
+        }
+
+        // No permutation found
+        return false;
+    }
+
+    /**
+    * Checks whether the current window is an anagram of the pattern.
+    *
+    * Logic:
+    * - Clone the window frequency array to avoid modifying the original state.
+    * - For each character in the pattern:
+    *     - If its frequency is zero in the window, it means either:
+    *         1) The character is not present in the current window at all, OR
+    *         2) The pattern contains this character more times than the window does.
+    *       In both cases, the window cannot be an anagram.
+    *     - Otherwise, decrement the frequency to account for one matched occurrence.
+    * - If all characters of the pattern are successfully matched,
+    *   the current window is an anagram.
+    */
+    private boolean isAnagram(String pattern, int[] freqArr) {
+        // Clone to avoid mutating original frequency array
+        freqArr = freqArr.clone();
+
+        for (int i = 0; i < pattern.length(); i++) {
+            int idx = pattern.charAt(i) - 'a';
+
+            if (freqArr[idx] == 0) {
+                return false;
+            }
+
+            freqArr[idx]--;
+        }
+
+        return true;
+    }
+}
+
+
+
+//Better Approach
+
+class Solution {
+    public boolean checkInclusion(String pattern, String text) {
+        if (pattern.length() > text.length()) {
+            return false;
+        }
+
+        int windowStart = 0;
+        int windowEnd = 0;
+        int windowSize = pattern.length();
+
+        /*
+         * ------------------------------------------------------------
+         * What does patternFreqMap represent?
+         * ------------------------------------------------------------
+         * patternFreqMap keeps track of how many MORE times
+         * each character is still REQUIRED in the current window
+         * to form a valid anagram.
+         *
+         * Initially:
+         *   pattern = "aab"
+         *   map = {a=2, b=1}
+         *
+         * Interpretation:
+         * - a is required 2 more times
+         * - b is required 1 more time
+         */
+        Map<Character, Integer> patternFreqMap = new HashMap<>();
+
+        // Build frequency map from the pattern
+        for (int i = 0; i < pattern.length(); i++) {
+            char ch = pattern.charAt(i);
+            patternFreqMap.put(ch, patternFreqMap.getOrDefault(ch, 0) + 1);
+        }
+
+        /*
+         * Build the first window of size = pattern.length()
+         * Reduce frequency when pattern characters appear in window.
+         */
+        while (windowEnd < windowSize) {
+            char ch = text.charAt(windowEnd++);
+            if (patternFreqMap.containsKey(ch)) {
+                patternFreqMap.put(ch, patternFreqMap.get(ch) - 1);
+            }
+        }
+
+        // If all frequencies are zero → first window is an anagram
+        if (isAnagram(patternFreqMap)) {
+            return true;
+        }
+
+        while (windowEnd < text.length()) {
             /*
-             * If a permutation of str1 is present in any substring (of size str1.length())
-             * in str2, it must have the same characters with the same counts.
-             * This means that if we can match the character counts of
-             * a substring (of size str1.length()) in str2 with those in str1,
-             * we can confirm that the substring is a permutation of str1.
+             * ------------------------------------------------------------
+             * OUTGOING CHARACTER (leaving the window)
+             * ------------------------------------------------------------
+             * When a character leaves the window:
+             * - If it belongs to the pattern, we INCREASE its count.
+             *
+             * Why?
+             * - That character is no longer contributing to the current window.
+             * - We now REQUIRE one more occurrence of it again to form an anagram.
              */
-            if (isAnagram(str2.substring(start, end + 1), str1)) {
-                return true; // Found a permutation of str1 in str2
+            char outgoing = text.charAt(windowStart);
+            if (patternFreqMap.containsKey(outgoing)) {
+                patternFreqMap.put(outgoing, patternFreqMap.get(outgoing) + 1);
             }
-            start++; // Move the window to the right
-            end++; // Extend the window by one character
+
+            windowStart++;
+
+            /*
+            * ------------------------------------------------------------
+            * INCOMING CHARACTER (entering the window)
+            * ------------------------------------------------------------
+            * When a character enters the window:
+            * - If it belongs to the pattern, we DECREASE its count.
+            *
+            * Why?
+            * - This character helps satisfy the anagram requirement.
+            */
+            char incoming = text.charAt(windowEnd);
+            if (patternFreqMap.containsKey(incoming)) {
+                patternFreqMap.put(incoming, patternFreqMap.get(incoming) - 1);
+            }
+
+            if (isAnagram(patternFreqMap)) {
+                return true;
+            }
+
+            windowEnd++;
         }
 
-        return false; // No permutation found
+        return false;
     }
 
-    private boolean isAnagram(String str1, String str2) {
-        int[] frequencyArray = new int[26];
-
-        for (int i = 0; i < str1.length(); i++) {
-            frequencyArray[str1.charAt(i) - 'a']++;
-        }
-
-        for (int i = 0; i < str2.length(); i++) {
-            frequencyArray[str2.charAt(i) - 'a']--;
-        }
-
-        for (int i = 0; i < 26; i++) {
-            if (frequencyArray[i] != 0) {
+    /**
+     * Checks whether the current window is an anagram.
+     *
+     * An anagram exists when:
+     * - All character requirements are fully satisfied.
+     * - i.e., all values in the frequency map are exactly zero.
+     *
+     * NOTE:
+     * - Negative value means the window has MORE occurrences of this
+     *   character than required by the pattern.
+     * - Any positive value means some character is still missing.
+     *
+     * - Since the window size is FIXED and exactly equal to the pattern length:
+     *
+     *   If any CHARACTER OF THE PATTERN has a NEGATIVE frequency,
+     *   it means the window contains MORE occurrences of that character
+     *   than required by the pattern.
+     *
+     * - Because the total window size is fixed, this extra occurrence
+     *   must be taking the place of some OTHER CHARACTER OF THE PATTERN.
+     *
+     * - Hence, at least one other character of the pattern
+     *   will have a POSITIVE frequency (i.e., it is still missing).
+     *
+     * - Therefore, a valid anagram (permutation) exists
+     *   ONLY when all pattern character frequencies are exactly zero.
+    */
+    private boolean isAnagram(Map<Character, Integer> patternFreqMap) {
+        for (int freq : patternFreqMap.values()) {
+            if (freq != 0) {
                 return false;
             }
         }
@@ -157,87 +338,75 @@ class Solution {
 }
 
 
-//Better implementation
+//Optimal Approach 
 
 class Solution {
-    public boolean checkInclusion(String str1, String str2) {
-        if (str2.length() < str1.length()) {
+    public boolean checkInclusion(String pattern, String text) {
+        if (pattern.length() > text.length()) {
             return false;
         }
 
-        int start = 0;
-        int end = str1.length() - 1;
+        /*
+         * patternFreqArr:
+         * Stores frequency of each character in the pattern.
+         *
+         * windowFreqArr:
+         * Stores frequency of each character in the current window of text.
+         */
+        int[] patternFreqArr = new int[26];
+        int[] windowFreqArr = new int[26];
 
-        while (end < str2.length()) {
-            if (isAnagram(str2, start, end, str1)) {
-                return true;
-            }
-            start++;
-            end++;
+        // Build frequency array for the pattern
+        for (int i = 0; i < pattern.length(); i++) {
+            patternFreqArr[pattern.charAt(i) - 'a']++;
         }
 
+        int windowStart = 0;
+        int windowEnd = 0;
+        int windowSize = pattern.length();
+
+        /*
+         * Build the FIRST window of size = pattern length.
+         * Count frequencies of characters in this initial window.
+         */
+        while (windowEnd < windowSize) {
+            windowFreqArr[text.charAt(windowEnd) - 'a']++;
+            windowEnd++;
+        }
+
+        // If first window's frequency matches the pattern, permutation found
+        if (areFrequenciesEqual(patternFreqArr, windowFreqArr)) {
+            return true;
+        }
+
+        while (windowEnd < text.length()) {
+            // Remove outgoing character
+            windowFreqArr[text.charAt(windowStart++) - 'a']--;
+
+            // Add incoming character
+            windowFreqArr[text.charAt(windowEnd++) - 'a']++;
+
+            // Check if current window is a permutation of the pattern
+            if (areFrequenciesEqual(patternFreqArr, windowFreqArr)) {
+                return true;
+            }
+        }
+
+        // No permutation found in any window
         return false;
     }
 
-    private boolean isAnagram(String str1, int start, int end, String str2) {
-        int[] frequencyArray = new int[26];
-
-        for (int i = start; i <= end; i++) {
-            frequencyArray[str1.charAt(i) - 'a']++;
-        }
-
-        for (int i = 0; i < str2.length(); i++) {
-            frequencyArray[str2.charAt(i) - 'a']--;
-        }
-
+    /**
+     * Compares two frequency arrays.
+     *
+     * Logic:
+     * - If frequencies of ALL characters ('a' to 'z') are equal,
+     *   then the two strings are anagrams of each other.
+     *
+     */
+    private boolean areFrequenciesEqual(int[] freqArr1, int[] freqArr2) {
         for (int i = 0; i < 26; i++) {
-            if (frequencyArray[i] != 0) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-}
-
-
-//Optimal Implementation 
-
-class Solution {
-    public boolean checkInclusion(String str1, String str2) {
-        if (str2.length() < str1.length()) {
-            return false;
-        }
-
-        int start = 0, end = str1.length() - 1;
-        int[] str1Count = new int[26];
-        int[] str2Count = new int[26];
-
-        for (int i = 0; i < str1.length(); i++) {
-            // Populate frequency array for str1
-            str1Count[str1.charAt(i) - 'a']++;
-            // Intilize frequency array for the first (str1.length() - 1) characters of str2.
-            if (i < str1.length() - 1) {
-                str2Count[str2.charAt(i) - 'a']++;
-            }
-        }
-
-        while (end < str2.length()) {
-            str2Count[str2.charAt(end) - 'a']++; // Include the character at end
-            if (isFrequencyEqual(str1Count, str2Count)) {
-                return true;
-            }
-            str2Count[str2.charAt(start) - 'a']--; // Exclude the character at start
-            start++;
-            end++;
-        }
-
-        return false;
-    }
-
-    private boolean isFrequencyEqual(int[] str1Count, int[] str2Count) {
-        for (int i = 0; i < 26; i++) {
-            if (str1Count[i] != str2Count[i]) {
+            if (freqArr1[i] != freqArr2[i]) {
                 return false;
             }
         }
