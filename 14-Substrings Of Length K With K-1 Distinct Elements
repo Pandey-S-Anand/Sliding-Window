@@ -1,0 +1,234 @@
+//Bruteforce Approach
+
+class Solution {
+    public int substrCount(String str, int k) {
+        Map<Character, Integer> freqMap = new HashMap<>();
+        int countKMinusOneDistinctSubstrings = 0;
+
+        /*
+         Try every possible starting index.
+         For each start, we only need to build a substring
+         of length exactly k (fixed-size requirement).
+        */
+        for (int start = 0; start < str.length(); start++) {
+            for (int end = start; end < str.length(); end++) {
+                // include current character in substring
+                char ch = str.charAt(end);
+                freqMap.put(ch, freqMap.getOrDefault(ch, 0) + 1);
+
+                int substringLength = end - start + 1;
+
+                /*
+                 Once length becomes k:
+                 - check if distinct characters == k - 1
+                 - no need to expand further because
+                   longer substrings are irrelevant (only size k matters)
+                */
+                if (substringLength == k) {
+
+                    if (freqMap.size() == k - 1) {
+                        countKMinusOneDistinctSubstrings++;
+                    }
+
+                    // stop exploring longer substrings for this start
+                    break;
+                }
+            }
+
+            // reset frequencies for next starting index
+            freqMap.clear();
+        }
+
+        return countKMinusOneDistinctSubstrings;
+    }
+}
+
+
+//Improved Approach
+
+class Solution {
+    public int substrCount(String str, int k) {
+        Map<Character, Integer> freqMap = new HashMap<>();
+
+        int windowStart = 0;
+        int windowEnd = 0;
+        int countKMinusOneDistinctSubstrings = 0;
+
+        // Build the first window of size k
+        while (windowEnd < k) {
+            char ch = str.charAt(windowEnd++);
+            freqMap.put(ch, freqMap.getOrDefault(ch, 0) + 1);
+        }
+
+        // check the first window
+        if (freqMap.size() == k - 1) {
+            countKMinusOneDistinctSubstrings++;
+        }
+
+        /*
+         Slide the window:
+         remove leftmost character and add next character
+         Window size always remains k
+        */
+        while (windowEnd < str.length()) {
+            // remove outgoing character
+            char startChar = str.charAt(windowStart++);
+            freqMap.put(startChar, freqMap.get(startChar) - 1);
+            if (freqMap.get(startChar) == 0) {
+                freqMap.remove(startChar);
+            }
+
+            // add incoming character
+            char endChar = str.charAt(windowEnd);
+            freqMap.put(endChar, freqMap.getOrDefault(endChar, 0) + 1);
+
+            // check if current window satisfies condition
+            if (freqMap.size() == k - 1) {
+                countKMinusOneDistinctSubstrings++;
+            }
+
+            windowEnd++;
+        }
+
+        return countKMinusOneDistinctSubstrings;
+    }
+}
+
+
+//Better Approach
+
+class Solution {
+    public int substrCount(String str, int k) {
+        int[] freqArr = new int[26]; // frequency of characters inside current window
+        int windowStart = 0;
+        int windowEnd = 0;
+
+        int countKMinusOneDistinctSubstrings = 0;
+
+        // Build the first window of length k.
+        while (windowEnd < k) {
+            freqArr[str.charAt(windowEnd++) - 'a']++;
+        }
+
+        // evaluate first window
+        if (isValidWindow(freqArr, k)) {
+            countKMinusOneDistinctSubstrings++;
+        }
+
+        /*
+         Slide the window one step at a time:
+        
+         Remove outgoing character (left side)
+         Add incoming character (right side)
+        
+         Window size remains constant = k
+        */
+        while (windowEnd < str.length()) {
+            // remove character leaving the window
+            freqArr[str.charAt(windowStart++) - 'a']--;
+
+            // add new character entering the window
+            freqArr[str.charAt(windowEnd++) - 'a']++;
+
+            // evaluate updated window
+            if (isValidWindow(freqArr, k)) {
+                countKMinusOneDistinctSubstrings++;
+            }
+        }
+
+        return countKMinusOneDistinctSubstrings;
+    }
+
+    /*
+     A window is valid when:
+     number of distinct characters == k - 1
+    
+     While counting distinct characters:
+     if distinct reaches k, we can stop early (invalid window).
+    */
+    private boolean isValidWindow(int[] freqArr, int k) {
+        int distinctChars = 0;
+
+        for (int i = 0; i < 26; i++) {
+            if (freqArr[i] != 0) {
+                distinctChars++;
+
+                // more than allowed distinct characters
+                if (distinctChars == k) {
+                    return false;
+                }
+            }
+        }
+
+        return distinctChars == k - 1;
+    }
+}
+
+
+//Optimal Approach
+
+class Solution {
+    public int substrCount(String str, int k) {
+        int[] freqArr = new int[26]; // frequency of characters in current window
+        int windowStart = 0;
+        int windowEnd = 0;
+
+        int countKMinusOneDistinctSubstrings = 0;
+        int distinctChars = 0; // number of distinct characters in window
+
+        /*
+         Build the first window of length k.
+        
+         Whenever freq[idx] == 0 before insertion,
+         it means this character was not present in the window.
+         So adding it introduces a NEW distinct character.
+        */
+        while (windowEnd < k) {
+            int idx = str.charAt(windowEnd++) - 'a';
+
+            if (freqArr[idx] == 0) { // first occurrence in window
+                distinctChars++;
+            }
+            freqArr[idx]++;
+        }
+
+        // evaluate first window
+        if (distinctChars == k - 1) {
+            countKMinusOneDistinctSubstrings++;
+        }
+
+        /*
+         Slide the fixed-size window:
+        
+         1) Remove left character
+            If its frequency becomes zero → that distinct character disappears
+        
+         2) Add right character
+            If its previous frequency was zero → new distinct character appears
+        */
+        while (windowEnd < str.length()) {
+            // remove outgoing character
+            int idx = str.charAt(windowStart++) - 'a';
+            freqArr[idx]--;
+
+            if (freqArr[idx] == 0) { // character completely removed from window
+                distinctChars--;
+            }
+
+            // add incoming character
+            idx = str.charAt(windowEnd++) - 'a';
+
+            if (freqArr[idx] == 0) { // character newly introduced in window
+                distinctChars++;
+            }
+            freqArr[idx]++;
+
+            // evaluate updated window
+            if (distinctChars == k - 1) {
+                countKMinusOneDistinctSubstrings++;
+            }
+        }
+
+        return countKMinusOneDistinctSubstrings;
+    }
+}
