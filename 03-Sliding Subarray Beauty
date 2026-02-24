@@ -71,7 +71,7 @@ class Solution {
          * TreeMap keeps keys sorted, which allows us to find
          * the x-th smallest negative number by traversing in order.
          */
-        Map<Integer, Integer> freqMap = new TreeMap<>();
+        Map<Integer, Integer> windowNegativeFreqMap = new TreeMap<>();
 
         int windowStart = 0;
         int windowEnd = 0;
@@ -83,13 +83,13 @@ class Solution {
          */
         while (windowEnd < k) {
             if (arr[windowEnd] < 0) {
-                freqMap.put(arr[windowEnd], freqMap.getOrDefault(arr[windowEnd], 0) + 1);
+                windowNegativeFreqMap.put(arr[windowEnd], windowNegativeFreqMap.getOrDefault(arr[windowEnd], 0) + 1);
             }
             windowEnd++;
         }
 
         // Compute beauty for the first window
-        xthSmallestPerWindow[windowStart] = getXthSmallestInWindow(freqMap, x);
+        xthSmallestPerWindow[windowStart] = getXthSmallestInWindow(windowNegativeFreqMap, x);
 
         /*
          * Slide the window across the array:
@@ -100,11 +100,11 @@ class Solution {
         while (windowEnd < arr.length) {
             // Remove the outgoing element (only if it is negative)
             if (arr[windowStart] < 0) {
-                freqMap.put(arr[windowStart], freqMap.get(arr[windowStart]) - 1);
+                windowNegativeFreqMap.put(arr[windowStart], windowNegativeFreqMap.get(arr[windowStart]) - 1);
 
                 // Remove key completely if frequency becomes zero
-                if (freqMap.get(arr[windowStart]) == 0) {
-                    freqMap.remove(arr[windowStart]);
+                if (windowNegativeFreqMap.get(arr[windowStart]) == 0) {
+                    windowNegativeFreqMap.remove(arr[windowStart]);
                 }
             }
 
@@ -113,11 +113,11 @@ class Solution {
 
             // Add the incoming element (only if it is negative)
             if (arr[windowEnd] < 0) {
-                freqMap.put(arr[windowEnd], freqMap.getOrDefault(arr[windowEnd], 0) + 1);
+                windowNegativeFreqMap.put(arr[windowEnd], windowNegativeFreqMap.getOrDefault(arr[windowEnd], 0) + 1);
             }
 
             // Compute beauty for the current window
-            xthSmallestPerWindow[windowStart] = getXthSmallestInWindow(freqMap, x);
+            xthSmallestPerWindow[windowStart] = getXthSmallestInWindow(windowNegativeFreqMap, x);
             // Move windowEnd forward to slide the window by one position.
             windowEnd++;
         }
@@ -125,10 +125,10 @@ class Solution {
         return xthSmallestPerWindow;
     }
 
-    private int getXthSmallestInWindow(Map<Integer, Integer> freqMap, int x) {
+    private int getXthSmallestInWindow(Map<Integer, Integer> windowNegativeFreqMap, int x) {
         // Traverse negatives in ascending order
-        for (int num : freqMap.keySet()) {
-            x -= freqMap.get(num);
+        for (int num : windowNegativeFreqMap.keySet()) {
+            x -= windowNegativeFreqMap.get(num);
 
             // When x is exhausted, current number is the answer
             if (x <= 0) {
@@ -184,36 +184,36 @@ class Solution {
         *
         * Mapping logic:
         * - For a negative number `-v`, we store its frequency at index `v`
-        *   i.e., freqArray[-arr[i]]++
+        *   i.e., windowNegativeFreqArr[-arr[i]]++
         *
         * This conversion is necessary because array indices must be non-negative.
         */
-        int[] freqArray = new int[51];
+        int[] windowNegativeFreqArr = new int[51];
 
         int windowStart = 0;
         int windowEnd = 0;
 
         while (windowEnd < k) {
             if (arr[windowEnd] < 0) {
-                freqArray[-arr[windowEnd]]++;
+                windowNegativeFreqArr[-arr[windowEnd]]++;
             }
             windowEnd++;
         }
 
-        xthSmallestPerWindow[windowStart] = getXthSmallestInWindow(freqArray, x);
+        xthSmallestPerWindow[windowStart] = getXthSmallestInWindow(windowNegativeFreqArr, x);
 
         while (windowEnd < arr.length) {
             if (arr[windowStart] < 0) {
-                freqArray[-arr[windowStart]]--;
+                windowNegativeFreqArr[-arr[windowStart]]--;
             }
 
             windowStart++;
 
             if (arr[windowEnd] < 0) {
-                freqArray[-arr[windowEnd]]++;
+                windowNegativeFreqArr[-arr[windowEnd]]++;
             }
 
-            xthSmallestPerWindow[windowStart] = getXthSmallestInWindow(freqArray, x);
+            xthSmallestPerWindow[windowStart] = getXthSmallestInWindow(windowNegativeFreqArr, x);
             windowEnd++;
         }
 
@@ -235,9 +235,9 @@ class Solution {
      * - The moment x <= 0, the corresponding negative value is
      *   the x-th smallest element.
      */
-    private int getXthSmallestInWindow(int[] freqArray, int x) {
+    private int getXthSmallestInWindow(int[] windowNegativeFreqArr, int x) {
         for (int num = 50; num >= 1; num--) {
-            x -= freqArray[num];
+            x -= windowNegativeFreqArr[num];
 
             if (x <= 0) {
                 return -num;
