@@ -232,37 +232,37 @@ class Solution {
         int totalSizeKWindows = arr.length - k + 1;
         int[] windowMaxima = new int[totalSizeKWindows];
 
-        Deque<Integer> deque = new ArrayDeque<>();
+        Deque<Integer> decreasingQueue = new ArrayDeque<>();
 
         int windowStart = 0, windowEnd = 0;
 
         // Process the first window separately
         while (windowEnd < k) {
-            while (!deque.isEmpty() && (arr[windowEnd] > arr[deque.peekLast()])) {
-                deque.pollLast();
+            while (!decreasingQueue.isEmpty() && (arr[windowEnd] > arr[decreasingQueue.peekLast()])) {
+                decreasingQueue.pollLast();
             }
 
-            deque.offerLast(windowEnd++);
+            decreasingQueue.offerLast(windowEnd++);
         }
 
         // The maximum for the first window
-        windowMaxima[windowStart] = arr[deque.peekFirst()];
+        windowMaxima[windowStart] = arr[decreasingQueue.peekFirst()];
         // Process the second window and all subsequent windows
         while (windowEnd < arr.length) {
             windowStart++;
-            windowMaxima[windowStart] = findMaxInWindow(arr, windowStart, windowEnd, deque);
+            windowMaxima[windowStart] = findMaxInWindow(arr, windowStart, windowEnd, decreasingQueue);
             windowEnd++;
         }
 
         return windowMaxima;
     }
 
-    private int findMaxInWindow(int[] arr, int windowStart, int windowEnd, Deque<Integer> deque) {
-        while (!deque.isEmpty() && arr[windowEnd] > arr[deque.peekLast()]) {
-            deque.pollLast();
+    private int findMaxInWindow(int[] arr, int windowStart, int windowEnd, Deque<Integer> decreasingQueue) {
+        while (!decreasingQueue.isEmpty() && arr[windowEnd] > arr[decreasingQueue.peekLast()]) {
+            decreasingQueue.pollLast();
         }
 
-        deque.offerLast(windowEnd);
+        decreasingQueue.offerLast(windowEnd);
 
         /*
         * Since the sliding window moves by 1 position at each step,
@@ -276,10 +276,10 @@ class Solution {
         * contains indices within the current window.
         * Ex: [5,3,4]
         */
-        if (deque.peekFirst() < windowStart) {
-            deque.pollFirst();
+        if (decreasingQueue.peekFirst() < windowStart) {
+            decreasingQueue.pollFirst();
         }
 
-        return arr[deque.peekFirst()];
+        return arr[decreasingQueue.peekFirst()];
     }
 }
