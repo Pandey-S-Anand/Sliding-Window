@@ -55,7 +55,7 @@ class Solution {
 class Solution {
     public long maximumSubarraySum(int[] arr, int k) {
         // Stores frequency of elements in the current window
-        Map<Integer, Integer> freqMap = new HashMap<>();
+        Map<Integer, Integer> windowFreqMap = new HashMap<>();
 
         long windowSum = 0L; // Sum of elements in the current window
         long maxDistinctSubarraySum = 0L;
@@ -69,12 +69,12 @@ class Solution {
          */
         while (windowEnd < k) {
             windowSum += arr[windowEnd];
-            freqMap.put(arr[windowEnd], freqMap.getOrDefault(arr[windowEnd], 0) + 1);
+            windowFreqMap.put(arr[windowEnd], windowFreqMap.getOrDefault(arr[windowEnd], 0) + 1);
             windowEnd++;
         }
 
         // Check if the first window contains all distinct elements
-        if (isDistinctSubarray(freqMap)) {
+        if (isDistinctSubarray(windowFreqMap)) {
             maxDistinctSubarraySum = Math.max(maxDistinctSubarraySum, windowSum);
         }
 
@@ -89,10 +89,10 @@ class Solution {
              * - Remove it from map if frequency becomes zero
              * - Subtract its value from the sum
              */
-            freqMap.put(arr[windowStart], freqMap.get(arr[windowStart]) - 1);
+            windowFreqMap.put(arr[windowStart], windowFreqMap.get(arr[windowStart]) - 1);
 
-            if (freqMap.get(arr[windowStart]) == 0) {
-                freqMap.remove(arr[windowStart]);
+            if (windowFreqMap.get(arr[windowStart]) == 0) {
+                windowFreqMap.remove(arr[windowStart]);
             }
 
             windowSum -= arr[windowStart++];
@@ -102,12 +102,12 @@ class Solution {
              * - Increase its frequency
              * - Add its value to the sum
              */
-            freqMap.put(arr[windowEnd], freqMap.getOrDefault(arr[windowEnd], 0) + 1);
+            windowFreqMap.put(arr[windowEnd], windowFreqMap.getOrDefault(arr[windowEnd], 0) + 1);
 
             windowSum += arr[windowEnd++];
 
             // If current window has all distinct elements, update the answer
-            if (isDistinctSubarray(freqMap)) {
+            if (isDistinctSubarray(windowFreqMap)) {
                 maxDistinctSubarraySum = Math.max(maxDistinctSubarraySum, windowSum);
             }
         }
@@ -123,8 +123,8 @@ class Solution {
      *   the window is NOT distinct.
      * - Otherwise, all elements are unique.
      */
-    private boolean isDistinctSubarray(Map<Integer, Integer> freqMap) {
-        for (int freq : freqMap.values()) {
+    private boolean isDistinctSubarray(Map<Integer, Integer> windowFreqMap) {
+        for (int freq : windowFreqMap.values()) {
             if (freq > 1) {
                 return false;
             }
@@ -138,7 +138,7 @@ class Solution {
 
 class Solution {
     public long maximumSubarraySum(int[] arr, int k) {
-        Map<Integer, Integer> freqMap = new HashMap<>();
+        Map<Integer, Integer> windowFreqMap = new HashMap<>();
 
         long windowSum = 0L;
         long maxDistinctSubarraySum = 0L;
@@ -160,10 +160,10 @@ class Solution {
         while (windowEnd < k) {
             windowSum += arr[windowEnd];
 
-            freqMap.put(arr[windowEnd], freqMap.getOrDefault(arr[windowEnd], 0) + 1);
+            windowFreqMap.put(arr[windowEnd], windowFreqMap.getOrDefault(arr[windowEnd], 0) + 1);
 
             // If frequency becomes > 1, a duplicate is introduced
-            if (freqMap.get(arr[windowEnd]) > 1) {
+            if (windowFreqMap.get(arr[windowEnd]) > 1) {
                 duplicatesInWindow++;
             }
 
@@ -199,15 +199,15 @@ class Solution {
             * Hence, whenever an outgoing element has frequency > 1,
             * removing it reduces the duplicate count by exactly 1.
             */
-            if (freqMap.get(arr[windowStart]) > 1) {
+            if (windowFreqMap.get(arr[windowStart]) > 1) {
                 duplicatesInWindow--;
             }
 
-            freqMap.put(arr[windowStart], freqMap.get(arr[windowStart]) - 1);
+            windowFreqMap.put(arr[windowStart], windowFreqMap.get(arr[windowStart]) - 1);
 
             // Remove key if frequency becomes zero
-            if (freqMap.get(arr[windowStart]) == 0) {
-                freqMap.remove(arr[windowStart]);
+            if (windowFreqMap.get(arr[windowStart]) == 0) {
+                windowFreqMap.remove(arr[windowStart]);
             }
 
             windowSum -= arr[windowStart++];
@@ -218,9 +218,9 @@ class Solution {
              * If its frequency becomes > 1 after adding,
              * a new duplicate is introduced.
              */
-            freqMap.put(arr[windowEnd], freqMap.getOrDefault(arr[windowEnd], 0) + 1);
+            windowFreqMap.put(arr[windowEnd], windowFreqMap.getOrDefault(arr[windowEnd], 0) + 1);
 
-            if (freqMap.get(arr[windowEnd]) > 1) {
+            if (windowFreqMap.get(arr[windowEnd]) > 1) {
                 duplicatesInWindow++;
             }
 
