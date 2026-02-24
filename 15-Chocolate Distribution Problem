@@ -1,0 +1,153 @@
+/*
+ Brute Force Approach:
+
+ Idea:
+ Generate all subsets of size 'numberOfStudents' from the given array.
+ For each valid subset:
+     - Find maximum element
+     - Find minimum element
+     - Compute their difference
+ Keep track of the smallest difference found.
+*/
+
+class Solution {
+    // Stores the global minimum difference found so far
+    private int minDiff;
+
+    public int findMinDiff(ArrayList<Integer> packets, int numberOfStudents) {
+        minDiff = Integer.MAX_VALUE;
+
+        // Start backtracking to explore all subsets of size = numberOfStudents
+        exploreSizeKSubsetsAndUpdateMinDiff(packets, 0, new ArrayList<>(), numberOfStudents);
+
+        return minDiff;
+    }
+
+    private void exploreSizeKSubsetsAndUpdateMinDiff(List<Integer> arr, int index, List<Integer> subset, int k) {
+        /*
+         Base Case:
+         If subset size becomes k,
+         compute (max - min) and update minDiff.
+        */
+        if (subset.size() == k) {
+            int currentMax = Collections.max(subset);
+            int currentMin = Collections.min(subset);
+            minDiff = Math.min(minDiff, currentMax - currentMin);
+            return;
+        }
+
+        /*
+         If we reach end of array,
+         no more elements left to choose.
+        */
+        if (index == arr.size()) {
+            return;
+        }
+
+        //Include current element --------
+        subset.add(arr.get(index));
+        exploreSizeKSubsetsAndUpdateMinDiff(arr, index + 1, subset, k);
+
+        //Exclude current element --------
+        subset.remove(subset.size() - 1);
+        exploreSizeKSubsetsAndUpdateMinDiff(arr, index + 1, subset, k);
+    }
+}
+
+
+//Better Approach
+
+class Solution {
+    private int minDiff;
+
+    public int findMinDiff(ArrayList<Integer> packets, int numberOfStudents) {
+        minDiff = Integer.MAX_VALUE;
+
+        /*
+        * When the array is sorted, any subset of a fixed size (i.e 'numberOfStudents')
+        * will have its minimum element at the beginning of the subset and its maximum
+        * element at the end.Without sorting, the maximum and minimum values within any
+        * window would require scanning the entire window each time to determine these
+        * values, leading to higher complexity.
+        */
+        Collections.sort(packets);
+
+        exploreSizeKSubsetsAndUpdateMinDiff(packets, 0, new ArrayList<>(), numberOfStudents);
+
+        return minDiff;
+    }
+
+    private void exploreSizeKSubsetsAndUpdateMinDiff(List<Integer> arr, int index, List<Integer> subset, int k) {
+        if (subset.size() == k) {
+            int currentMax = subset.get(subset.size() - 1);
+            int currentMin = subset.get(0);
+            minDiff = Math.min(minDiff, currentMax - currentMin);
+            return;
+        }
+
+        if (index == arr.size()) {
+            return;
+        }
+
+        subset.add(arr.get(index));
+        exploreSizeKSubsetsAndUpdateMinDiff(arr, index + 1, subset, k);
+
+        subset.remove(subset.size() - 1);
+        exploreSizeKSubsetsAndUpdateMinDiff(arr, index + 1, subset, k);
+    }
+}
+
+
+//Optimal Approach
+
+class Solution {
+    /*
+     Optimized Approach:
+     
+     1. Sort the packets.
+        After sorting, packets with closer chocolate counts
+        will be adjacent.
+     
+     2. We need to choose exactly 'numberOfStudents' packets.
+        So we check every consecutive window of size m.
+     
+     3. For each window:
+        difference = last_element - first_element
+     
+     4. Return the minimum difference found.
+    */
+    public int findMinDiff(ArrayList<Integer> packets, int numberOfStudents) {
+        int minDiff = Integer.MAX_VALUE;
+
+        //Sort the packets
+        Collections.sort(packets);
+
+        int windowStart = 0;
+        int windowEnd = 0;
+
+        //Create initial window of size = numberOfStudents
+        while (windowEnd < numberOfStudents) {
+            windowEnd++;
+        }
+
+        // Compute difference for first window
+        int currentDifference = packets.get(windowEnd - 1) - packets.get(windowStart);
+
+        minDiff = Math.min(minDiff, currentDifference);
+
+        /*
+         Slide the window forward one step at a time.
+         Since array is sorted:
+         - windowStart = minimum in window
+         - windowEnd = maximum in window
+        */
+        while (windowEnd < packets.size()) {
+            windowStart++;
+            currentDifference = packets.get(windowEnd) - packets.get(windowStart);
+            minDiff = Math.min(minDiff, currentDifference);
+            windowEnd++;
+        }
+
+        return minDiff;
+    }
+}
